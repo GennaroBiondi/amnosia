@@ -6,47 +6,50 @@ use std::{
     path::PathBuf,
 };
 
-pub struct TodoEntry {
+pub struct ReminderEntry {
     pub content: String,
     pub timestamp: UnixTimestamp,
 }
 
-pub struct TodoEntries {
-    pub entries: Vec<TodoEntry>,
+pub struct ReminderEntries {
+    pub entries: Vec<ReminderEntry>,
 }
 
 fn handle_option<T>(opt: Option<T>) -> Result<T> {
     match opt {
         Some(x) => Ok(x),
-        None => bail!("Todo Entries corrupted!"),
+        None => bail!("Reminder entries corrupted!"),
     }
 }
 
-pub fn get_todo_path() -> Result<PathBuf> {
+pub fn get_reminder_path() -> Result<PathBuf> {
     use dirs_next::home_dir;
+
     let base = home_dir().ok_or_else(|| anyhow::anyhow!("Could not determine home directory"))?;
-    let todo_path = base.join(".local/share/amnosia/entries.txt");
+    let reminder_path = base.join(".local/share/amnosia/reminders.txt");
 
-    if !todo_path.exists() {
+    if !reminder_path.exists() {
         println!(
-            "Todo file not found. Creating one at {}",
-            todo_path.display()
+            "Reminder file not found. Creating one at {}",
+            reminder_path.display()
         );
-        let parent = todo_path
+
+        let parent = reminder_path
             .parent()
-            .ok_or_else(|| anyhow::anyhow!("Failed to get parent of {}", todo_path.display()))?;
+            .ok_or_else(|| anyhow::anyhow!("Failed to get parent of {}", reminder_path.display()))?;
+
         fs::create_dir_all(parent)?;
-        fs::File::create(&todo_path)?;
+        fs::File::create(&reminder_path)?;
     }
 
-    if !todo_path.is_file() {
-        bail!("Todo file is not a file. Please replace it with a text file.");
+    if !reminder_path.is_file() {
+        bail!("Reminder file is not a file. Replace it with a text file.");
     }
 
-    return Ok(todo_path);
+    Ok(reminder_path)
 }
 
-impl TodoEntries {
+impl ReminderEntries {
     pub fn from_file(path: &PathBuf) -> Result<Self> {
         let file = std::fs::File::open(path)?;
         let reader = BufReader::new(file);
@@ -61,10 +64,10 @@ impl TodoEntries {
             let ts_str = handle_option(info.get(1))?;
             let timestamp = UnixTimestamp(ts_str.parse()?);
 
-            entries.push(TodoEntry { content, timestamp });
+            entries.push(ReminderEntry { content, timestamp });
         }
 
-        Ok(TodoEntries { entries })
+        Ok(ReminderEntries { entries })
     }
 
     pub fn list(&self, include_dates: bool) {
@@ -72,23 +75,22 @@ impl TodoEntries {
             return;
         }
 
-        self.entries.iter().for_each(|e| {
+        for e in &self.entries {
             if include_dates {
                 println!("[{}]: {}", e.timestamp.prettify(), e.content);
             } else {
                 println!("{}", e.content);
             }
-        });
+        }
     }
 }
 
-impl TodoEntry {
+impl ReminderEntry {
     pub fn dump_to_file(&self, path: &PathBuf) -> Result<()> {
         use std::io::Write;
+
         let mut file = OpenOptions::new().append(true).open(path)?;
-
         writeln!(file, "{}|{}", self.content, self.timestamp.0)?;
-
         Ok(())
     }
 }
