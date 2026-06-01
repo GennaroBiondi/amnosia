@@ -1,9 +1,11 @@
 [package]
 name = "amnosia"
-version = "0.1.0"
-edition = "2024"
+version = "0.1.2"
+authors = ["San_Genna <email@example.com>"]
+description = "a simple program to remind you of tasks!"
+edition = "2021"
 
 [dependencies]
 anyhow = "1.0.102"
 dirs-next = "2.0.0"
-newtype = { version = "0.1.0", git = "https://github.com/GennaroBiondi/newtype.git" }
+newtype = { git = "https://github.com/GennaroBiondi/newtype.git", rev = "4056e0699e739c51b8d8a2b5f4a04a1870592b75" }
