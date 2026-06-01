@@ -195,6 +195,7 @@ checksum = "616ec5685824bcc94416c6d4a7a446eea774a31efd7062c8480ba6fd06d7a6e5"
 [[package]]
 name = "newtype"
 version = "0.1.0"
+source = "git+https://github.com/GennaroBiondi/newtype.git#4056e0699e739c51b8d8a2b5f4a04a1870592b75"
 dependencies = [
  "chrono",
 ]

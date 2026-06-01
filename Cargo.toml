@@ -6,4 +6,4 @@ edition = "2024"
 [dependencies]
 anyhow = "1.0.102"
 dirs-next = "2.0.0"
-newtype = { version = "0.1.0", path = "../newtype" }
+newtype = { version = "0.1.0", git = "https://github.com/GennaroBiondi/newtype.git" }
