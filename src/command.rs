@@ -13,28 +13,20 @@ pub struct RemindInfo {
 pub enum Command {
     Remind(RemindInfo),
     Mind(MindInfo),
-    GetTodoPath,
+    GetReminderPath,
 }
 
 impl Command {
-    pub fn new_from_args() -> Result<Self> {
+    pub fn new_from_args(flags: Vec<String>) -> Result<Self> {
         use std::env;
 
         let arguments: Vec<String> = env::args().skip(1).collect();
         let command_str = arguments.get(0).map(String::as_str);
-        match command_str {
-            None | Some("remind") => {
-                let flags: Vec<String> = arguments
-                    .iter()
-                    .filter(|e| e.starts_with('-'))
-                    .cloned()
-                    .collect();
 
-                Ok(Self::Remind(RemindInfo {
-                    include_date: (flags.contains(&"-d".to_string())
-                        || flags.contains(&"--include-dates".to_string())),
-                }))
-            }
+        match command_str {
+            None | Some("remind") => Ok(Self::Remind(RemindInfo {
+                include_date: flags.iter().any(|f| f == "-d" || f == "--include-dates"),
+            })),
             Some("mind") => {
                 let entry = arguments.into_iter().skip(1).collect::<Vec<_>>().join(" ");
 
@@ -42,18 +34,16 @@ impl Command {
                     bail!("Entry can't be empty!");
                 }
 
-                if entry.contains("|") {
-                    bail!("Entry can't contain an '|' character!");
+                if entry.contains('|') {
+                    bail!("Entry can't contain '|' character!");
                 }
-
-                let now = UnixTimestamp::now();
 
                 Ok(Self::Mind(MindInfo {
                     entry,
-                    timestamp: now,
+                    timestamp: UnixTimestamp::now(),
                 }))
             }
-            Some("get_todo") => Ok(Self::GetTodoPath),
+            Some("get_reminder_path") => Ok(Self::GetReminderPath),
             Some(s) => bail!("Argument {} is not a valid command!", s),
         }
     }

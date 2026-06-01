@@ -1,34 +1,68 @@
 use anyhow::Result;
 use command::Command;
 
-use crate::todo::{TodoEntries, TodoEntry, get_todo_path};
+use crate::reminder::{get_reminder_path, ReminderEntries, ReminderEntry};
 
 mod command;
-mod todo;
+mod reminder;
+
+fn help() {
+    const NAME: &str = env!("CARGO_PKG_NAME");
+    const VERSION: &str = env!("CARGO_PKG_VERSION");
+    const AUTHORS: &str = env!("CARGO_PKG_AUTHORS");
+    const DESCRIPTION: &str = env!("CARGO_PKG_DESCRIPTION");
+
+    println!("{} {}. By {}", NAME, VERSION, AUTHORS);
+    println!("{}", DESCRIPTION);
+    println!();
+    println!(
+        "{} mind [STRING]:             - add entry to reminders.txt",
+        NAME
+    );
+    println!(
+        "{} remind [OPTIONS]:          - read all entries from reminders.txt",
+        NAME
+    );
+    println!(
+        "  --include-dates | -d:       - also read the timestamps (when the entries were added)"
+    );
+    println!(
+        "{} get_reminder_path:         - get the location of reminders.txt",
+        NAME
+    );
+    println!("  (default is '~/.local/share/amnosia/reminders.txt')");
+}
 
 fn main() -> Result<()> {
-    let command: Command = Command::new_from_args()?;
-    let todo_path = get_todo_path()?;
+    let flags: Vec<String> = std::env::args().filter(|e| e.starts_with('-')).collect();
+
+    if flags.iter().any(|f| f == "--help" || f == "-h") {
+        help();
+        return Ok(());
+    }
+
+    let command: Command = Command::new_from_args(flags)?;
+    let reminder_path = get_reminder_path()?;
 
     match command {
         Command::Remind(remind_info) => {
-            let todo_entries = TodoEntries::from_file(&todo_path)?;
-            todo_entries.list(remind_info.include_date);
-
+            let reminder_entries = ReminderEntries::from_file(&reminder_path)?;
+            reminder_entries.list(remind_info.include_date);
             Ok(())
         }
 
         Command::Mind(mind_info) => {
-            let todo_entry = TodoEntry {
+            let reminder_entry = ReminderEntry {
                 content: mind_info.entry,
                 timestamp: mind_info.timestamp,
             };
 
-            todo_entry.dump_to_file(&todo_path)?;
+            reminder_entry.dump_to_file(&reminder_path)?;
             Ok(())
         }
-        Command::GetTodoPath => {
-            println!("{}", todo_path.display());
+
+        Command::GetReminderPath => {
+            println!("{}", reminder_path.display());
             Ok(())
         }
     }
