@@ -32,32 +32,12 @@ cp target/release/amnosia ~/.local/bin/
 Make sure `~/.local/bin` is in your PATH.
 
 ## Usage
-
-### Add a reminder
-
-```bash
-amnosia mind "your reminder text"
-```
-
-### List reminders
-
-```bash
-amnosia remind
-```
-
-Options:
-
-```text
--d, --include-dates    Show timestamps
-```
-
-### Show reminder file path
-
-```bash
-amnosia get_reminder_path
-```
-
-(Default: `~/.local/share/amnosia/reminders.txt`)
+| Command | Info |
+| --- | --- |
+| `amnosia mind "ENTRY"` | Add an entry |
+| `amnosia remind` | Lists all reminders |
+| `amnosia get_reminder_path` | Display reminder file path |
+| `amnosia --help` | Display more detailed info about the program |
 
 ## Auto-run on shell start
 
@@ -69,6 +49,7 @@ amnosia remind
 
 Add it to your shell config:
 
+```
 - `.zshrc`
 - `.bashrc`
 ```
