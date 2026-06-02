@@ -46,6 +46,8 @@ fn main() -> Result<()> {
             Ok(())
         }
 
+        Command::Demind(demind_info) => Ok(()),
+
         Command::Mind(mind_info) => {
             let reminder_entry = ReminderEntry {
                 content: mind_info.entry,

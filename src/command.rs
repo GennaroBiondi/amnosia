@@ -1,3 +1,5 @@
+use std::env::args;
+
 use anyhow::{bail, Result};
 use newtype::UnixTimestamp;
 
@@ -6,13 +8,18 @@ pub struct MindInfo {
     pub timestamp: UnixTimestamp,
 }
 
+pub struct DemindInfo {
+    pub entry_query: String,
+}
+
 pub struct RemindInfo {
     pub include_date: bool,
 }
 
 pub enum Command {
-    Remind(RemindInfo),
     Mind(MindInfo),
+    Remind(RemindInfo),
+    Demind(DemindInfo),
     GetReminderPath,
 }
 
@@ -42,6 +49,19 @@ impl Command {
                     entry,
                     timestamp: UnixTimestamp::now(),
                 }))
+            }
+            Some("demind") => {
+                let entry_query = arguments.into_iter().skip(1).collect::<Vec<_>>().join(" ");
+
+                if entry_query.is_empty() {
+                    bail!("Entry can't be empty!");
+                }
+
+                if entry_query.contains('|') {
+                    bail!("Entry can't contain '|' character!");
+                }
+
+                Ok(Self::Demind(DemindInfo { entry_query }))
             }
             Some("get_reminder_path") => Ok(Self::GetReminderPath),
             Some(s) => bail!("Argument {} is not a valid command!", s),

@@ -1,4 +1,4 @@
-use anyhow::{Result, bail};
+use anyhow::{bail, Result};
 use newtype::UnixTimestamp;
 use std::{
     fs::{self, OpenOptions},
@@ -34,9 +34,9 @@ pub fn get_reminder_path() -> Result<PathBuf> {
             reminder_path.display()
         );
 
-        let parent = reminder_path
-            .parent()
-            .ok_or_else(|| anyhow::anyhow!("Failed to get parent of {}", reminder_path.display()))?;
+        let parent = reminder_path.parent().ok_or_else(|| {
+            anyhow::anyhow!("Failed to get parent of {}", reminder_path.display())
+        })?;
 
         fs::create_dir_all(parent)?;
         fs::File::create(&reminder_path)?;
