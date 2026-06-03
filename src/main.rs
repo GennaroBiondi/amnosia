@@ -1,10 +1,10 @@
-use anyhow::{bail, Result};
+use anyhow::{bail, anyhow, Result};
 use clap::Parser;
 use commands::{Cli, Commands};
 use newtype::UnixTimestamp;
 use reminder::Reminder;
 use reminder_list::ReminderList;
-use std::{io::Write, path::PathBuf};
+use std::{io::Write, path::PathBuf, path::Path, fs::File};
 
 mod commands;
 mod reminder;
@@ -36,6 +36,26 @@ fn expand_path(s: &str) -> Result<PathBuf> {
     }
 }
 
+fn init_reminders_file(path: &Path) -> Result<()> {
+    if path.exists() {
+        return Ok(());
+    }
+
+    let parent_dir = path
+        .parent()
+        .ok_or_else(|| anyhow!("Provided path {} has no parent and likely is invalid", path.display()))?;
+
+    if !parent_dir.exists() {
+        std::fs::create_dir_all(parent_dir)?;
+    }
+
+    // if the file already existed the function would've early exited
+    // so it's fine to create a new one, without being afraid
+    File::create(path)?;
+
+    Ok(())
+}
+
 fn get_reminders_file_path() -> Result<PathBuf> {
     let base =
         dirs_next::data_dir().ok_or_else(|| anyhow::anyhow!("No data directory available"))?;
@@ -52,6 +72,8 @@ fn main() -> Result<()> {
         Some(p) => expand_path(&p.to_string_lossy())?,
         None => default_path,
     };
+
+    init_reminders_file(&path)?;
 
     match cli.command {
         Commands::Mind { entry } => {
