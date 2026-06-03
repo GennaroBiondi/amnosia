@@ -26,7 +26,9 @@ fn ask_user() -> Result<bool> {
 
     match stdin().read_line(&mut response) {
         Ok(_n) => match response.trim().to_lowercase().as_str() {
-            "yes" | "y" | "yeah" | "positive" | "sure" => Ok(true),
+            "yes" | "y" | "yeah" | "positive" | "sure" | "absolutely" | "why_not" | "you_bet" => {
+                Ok(true)
+            }
             _ => Ok(false),
         },
         Err(error) => bail!("Error reading input: {error}"),
