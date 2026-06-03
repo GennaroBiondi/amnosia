@@ -1,66 +1,60 @@
 use anyhow::Result;
-use command::Command;
+use clap::Parser;
+use commands::{Cli, Commands};
+use newtype::UnixTimestamp;
+use reminder::Reminder;
+use reminder_list::ReminderList;
+use std::path::PathBuf;
 
-use reminder::{get_reminder_path, ReminderEntries, ReminderEntry};
-
-mod command;
-mod other_commands;
+mod commands;
 mod reminder;
+mod reminder_list;
 
-fn check_for_instant_flags(flags: &[String]) -> bool {
-    for flag in flags {
-        match flag.as_str() {
-            "--help" | "-h" => {
-                other_commands::help();
-                return true;
-            }
-            "--version" | "-v" => {
-                other_commands::get_version();
-                return true;
-            }
-            _ => {}
-        }
+fn expand_path(s: &str) -> Result<PathBuf> {
+    if let Some(rest) = s.strip_prefix("~/") {
+        let home = dirs_next::home_dir().ok_or(anyhow::anyhow!("Home directory not found!"))?;
+        Ok(home.join(rest))
+    } else {
+        Ok(PathBuf::from(s))
     }
-    false
 }
 
 fn main() -> Result<()> {
-    let args: Vec<String> = std::env::args().skip(1).collect();
-    let flags: Vec<String> = args
-        .iter()
-        .filter(|e| e.starts_with('-'))
-        .cloned()
-        .collect();
+    let cli = Cli::parse();
 
-    if check_for_instant_flags(&flags) {
-        return Ok(());
-    }
+    let path = cli
+        .reminder_path
+        .map(|p| expand_path(&p.to_string_lossy()))
+        .unwrap_or_else(|| expand_path("~/.local/share/amnosia/reminders.txt"))?;
 
-    let command: Command = Command::new_from_args(args)?;
-    let reminder_path = get_reminder_path()?;
-
-    match command {
-        Command::Remind(remind_info) => {
-            let reminder_entries = ReminderEntries::from_file(&reminder_path)?;
-            reminder_entries.list(remind_info.include_date);
-            Ok(())
-        }
-
-        Command::Demind(demind_info) => Ok(()),
-
-        Command::Mind(mind_info) => {
-            let reminder_entry = ReminderEntry {
-                content: mind_info.entry,
-                timestamp: mind_info.timestamp,
+    match cli.command {
+        Commands::Mind { entry } => {
+            let timestamp = UnixTimestamp::now();
+            let reminder_entry: Reminder = Reminder {
+                entry,
+                timestamp: timestamp,
             };
-
-            reminder_entry.dump_to_file(&reminder_path)?;
-            Ok(())
+            reminder_entry.append_to_file(&path)?;
         }
-
-        Command::GetReminderPath => {
-            println!("{}", reminder_path.display());
-            Ok(())
+        Commands::Remind { include_dates } => {
+            let reminder_list = ReminderList::from_file(&path)?;
+            for reminder in reminder_list.get_vec() {
+                match include_dates {
+                    Some(true) => {
+                        println!("[{}]: {}", reminder.timestamp.prettify(), reminder.entry)
+                    }
+                    _ => println!("{}", reminder.entry),
+                }
+            }
+        }
+        Commands::Demind { query } => {
+            let mut reminder_list = ReminderList::from_file(&path)?;
+            if let None = reminder_list.delete_reminder_by_entry_fuzzy(&query) {
+                println!("No entry found matching query: {}", query);
+            }
+            reminder_list.dump_to_file(&path)?;
         }
     }
+
+    Ok(())
 }
