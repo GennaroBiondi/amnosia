@@ -27,13 +27,22 @@ fn ask_user() -> Result<bool> {
 }
 
 fn expand_path(s: &str) -> Result<PathBuf> {
-    if let Some(rest) = s.strip_prefix("~/") {
-        let home =
-            dirs_next::home_dir().ok_or_else(|| anyhow::anyhow!("Home directory not found"))?;
-        Ok(home.join(rest))
-    } else {
-        Ok(PathBuf::from(s))
+    let s_lower = s.to_lowercase();
+    let prefixes = ["~/", "~\\", "%userprofile%/", "%userprofile%\\"];
+
+    for prefix in prefixes {
+        if s_lower.starts_with(prefix) {
+            let home = dirs_next::home_dir().ok_or_else(|| anyhow!("Home directory not found"))?;
+            let rest = &s[prefix.len()..];
+            return Ok(home.join(rest));
+        }
     }
+
+    if s == "~" || s == "%USERPROFILE%" {
+        return dirs_next::home_dir().ok_or_else(|| anyhow!("Home directory not found"));
+    }
+
+    Ok(PathBuf::from(s))
 }
 
 fn init_reminders_file(path: &Path) -> Result<()> {
