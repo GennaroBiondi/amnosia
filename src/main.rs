@@ -10,15 +10,6 @@ mod commands;
 mod reminder;
 mod reminder_list;
 
-fn expand_path(s: &str) -> Result<PathBuf> {
-    if let Some(rest) = s.strip_prefix("~/") {
-        let home = dirs_next::home_dir().ok_or(anyhow::anyhow!("Home directory not found!"))?;
-        Ok(home.join(rest))
-    } else {
-        Ok(PathBuf::from(s))
-    }
-}
-
 fn ask_user() -> Result<bool> {
     use std::io::stdin;
 
@@ -35,13 +26,32 @@ fn ask_user() -> Result<bool> {
     }
 }
 
+fn expand_path(s: &str) -> Result<PathBuf> {
+    if let Some(rest) = s.strip_prefix("~/") {
+        let home =
+            dirs_next::home_dir().ok_or_else(|| anyhow::anyhow!("Home directory not found"))?;
+        Ok(home.join(rest))
+    } else {
+        Ok(PathBuf::from(s))
+    }
+}
+
+fn get_reminders_file_path() -> Result<PathBuf> {
+    let base =
+        dirs_next::data_dir().ok_or_else(|| anyhow::anyhow!("No data directory available"))?;
+
+    Ok(base.join("amnosia").join("reminders.txt"))
+}
+
 fn main() -> Result<()> {
     let cli = Cli::parse();
 
-    let path = cli
-        .reminder_path
-        .map(|p| expand_path(&p.to_string_lossy()))
-        .unwrap_or_else(|| expand_path("~/.local/share/amnosia/reminders.txt"))?;
+    let default_path = get_reminders_file_path()?;
+
+    let path = match cli.reminder_path {
+        Some(p) => expand_path(&p.to_string_lossy())?,
+        None => default_path,
+    };
 
     match cli.command {
         Commands::Mind { entry } => {
