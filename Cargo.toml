@@ -7,5 +7,6 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1.0.102"
+clap = { version = "4.6.1", features = ["derive"] }
 dirs-next = "2.0.0"
 newtype = { git = "https://github.com/GennaroBiondi/newtype.git", rev = "4056e0699e739c51b8d8a2b5f4a04a1870592b75" }
