@@ -1,6 +1,6 @@
+use clap::{Args, Parser, Subcommand};
+use std::fmt::Debug;
 use std::path::PathBuf;
-
-use clap::{Parser, Subcommand};
 
 #[derive(Parser)]
 #[command(version, about)]
@@ -12,6 +12,18 @@ pub struct Cli {
     pub reminder_path: Option<PathBuf>,
 }
 
+#[derive(Args, Debug)]
+#[group(required = true, multiple = false)]
+pub struct Query {
+    /// Fuzzy search
+    #[arg(short, long)]
+    pub query: Option<String>,
+
+    /// Exact match
+    #[arg(short = 'e', long)]
+    pub exact_query: Option<String>,
+}
+
 #[derive(Subcommand)]
 pub enum Commands {
     Mind {
@@ -19,11 +31,14 @@ pub enum Commands {
         entry: String,
     },
     Remind {
+        #[arg(short = 'n', long = "number-limit")]
+        number_limit: Option<usize>,
+
         #[arg(short = 'd', long)]
         include_dates: Option<bool>,
     },
     Demind {
-        #[arg(short, long)]
-        query: String,
+        #[command(flatten)]
+        query: Query,
     },
 }

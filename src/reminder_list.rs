@@ -2,7 +2,7 @@ use crate::reminder::Reminder;
 use anyhow::{bail, Result};
 use newtype::UnixTimestamp;
 use std::collections::HashMap;
-use std::{ops::Index, path::Path, vec};
+use std::path::Path;
 
 pub struct ReminderList(Vec<Reminder>);
 
@@ -37,6 +37,14 @@ impl ReminderList {
             .iter()
             .enumerate()
             .filter(|(_, x)| x.entry.contains(query))
+            .collect()
+    }
+
+    pub fn find_reminders_by_exact_entry(&self, query: &str) -> HashMap<usize, &Reminder> {
+        self.get_vec()
+            .iter()
+            .enumerate()
+            .filter(|(_, x)| x.entry == query)
             .collect()
     }
 

@@ -50,9 +50,17 @@ fn main() -> Result<()> {
             };
             reminder_entry.append_to_file(&path)?;
         }
-        Commands::Remind { include_dates } => {
+        Commands::Remind {
+            include_dates,
+            number_limit,
+        } => {
             let reminder_list = ReminderList::from_file(&path)?;
-            for reminder in reminder_list.get_vec() {
+            let vec = reminder_list.get_vec();
+            let iter = match number_limit {
+                Some(n) => vec.iter().rev().take(n).collect::<Vec<_>>(),
+                None => vec.iter().collect::<Vec<_>>(),
+            };
+            for reminder in iter {
                 match include_dates {
                     Some(true) => {
                         println!("[{}]: {}", reminder.timestamp.prettify(), reminder.entry)
@@ -63,40 +71,53 @@ fn main() -> Result<()> {
         }
         Commands::Demind { query } => {
             let mut reminder_list = ReminderList::from_file(&path)?;
+
+            let (search_str, fuzzy) = match (query.query, query.exact_query) {
+                (Some(q), _) => (q, true),
+                (_, Some(e)) => (e, false),
+                _ => unreachable!(),
+            };
+
             let mut search_literally = true;
-            match query.to_lowercase().as_str() {
-                "all" => {
-                    println!("You've entered 'all' as your query.");
-                    println!("Did you mean to search for entries containing 'all'?");
-                    print!("[y/n]: ");
-                    std::io::stdout().flush()?;
-                    if ask_user()? {
-                        search_literally = true;
-                    } else {
-                        print!("Are you sure you want to delete ALL entries? [y/n]: ");
+            if fuzzy {
+                match search_str.to_lowercase().as_str() {
+                    "all" => {
+                        println!("You've entered 'all' as your query.");
+                        println!("Did you mean to search for entries containing 'all'?");
+                        print!("[y/n]: ");
                         std::io::stdout().flush()?;
                         if ask_user()? {
-                            println!("Deleting all entries...");
-                            reminder_list.wipe();
-                            reminder_list.dump_to_file(&path)?;
+                            search_literally = true;
+                        } else {
+                            print!("Are you sure you want to delete ALL entries? [y/n]: ");
+                            std::io::stdout().flush()?;
+                            if ask_user()? {
+                                println!("Deleting all entries...");
+                                reminder_list.wipe();
+                                reminder_list.dump_to_file(&path)?;
+                            }
+                            return Ok(());
                         }
-                        return Ok(());
                     }
+                    _ => {}
                 }
-                _ => {}
             }
 
             if search_literally {
-                let to_delete_list = &reminder_list.find_reminders_by_fuzzy_entry(&query);
+                let to_delete_list = if fuzzy {
+                    reminder_list.find_reminders_by_fuzzy_entry(&search_str)
+                } else {
+                    reminder_list.find_reminders_by_exact_entry(&search_str)
+                };
                 if to_delete_list.is_empty() {
-                    println!("No reminders found matching query: {}", query);
+                    println!("No reminders found matching query: {}", search_str);
                     return Ok(());
                 }
                 if to_delete_list.len() > 1 {
                     println!("Multiple matches found!");
                 }
                 let mut indices_to_delete: Vec<usize> = Vec::new();
-                for (index, reminder) in to_delete_list {
+                for (index, reminder) in &to_delete_list {
                     println!("Do you want to delete this reminder?");
                     println!("  Content: {}", reminder.entry);
                     println!("  At:      {}", reminder.timestamp.prettify());
