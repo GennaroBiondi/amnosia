@@ -1,10 +1,10 @@
-use anyhow::{bail, anyhow, Result};
+use anyhow::{anyhow, bail, Result};
 use clap::Parser;
 use commands::{Cli, Commands};
 use newtype::UnixTimestamp;
 use reminder::Reminder;
 use reminder_list::ReminderList;
-use std::{io::Write, path::PathBuf, path::Path, fs::File};
+use std::{fs::File, io::Write, path::Path, path::PathBuf};
 
 mod commands;
 mod reminder;
@@ -41,9 +41,12 @@ fn init_reminders_file(path: &Path) -> Result<()> {
         return Ok(());
     }
 
-    let parent_dir = path
-        .parent()
-        .ok_or_else(|| anyhow!("Provided path {} has no parent and likely is invalid", path.display()))?;
+    let parent_dir = path.parent().ok_or_else(|| {
+        anyhow!(
+            "Provided path {} has no parent and likely is invalid",
+            path.display()
+        )
+    })?;
 
     if !parent_dir.exists() {
         std::fs::create_dir_all(parent_dir)?;
