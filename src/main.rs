@@ -45,14 +45,18 @@ fn expand_path(s: &str) -> Result<PathBuf> {
     Ok(PathBuf::from(s))
 }
 
-fn init_reminders_file(path: &Path) -> Result<()> {
-    if path.exists() {
-        return Ok(());
+fn is_a_valid_reminders_file(path: &Path) -> Result<()> {
+    if !path.exists() {
+        bail!("Reminders file doesn't exist: {}", path.display());
+    }
+
+    if !path.is_file() {
+        bail!("Reminders file isn't a file: {}", path.display());
     }
 
     let parent_dir = path.parent().ok_or_else(|| {
         anyhow!(
-            "Provided path {} has no parent and likely is invalid",
+            "Provided path {} has no parent and is likely invalid",
             path.display()
         )
     })?;
@@ -85,7 +89,7 @@ fn main() -> Result<()> {
         None => default_path,
     };
 
-    init_reminders_file(&path)?;
+    is_a_valid_reminders_file(&path)?;
 
     match cli.command {
         Commands::Mind { entry } => {
