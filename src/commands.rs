@@ -8,7 +8,7 @@ pub struct Cli {
     #[command(subcommand)]
     pub command: Commands,
 
-    #[arg(short = 'p', long = "path")]
+    #[arg(short = 'p', long = "path", global = true)]
     pub reminder_path: Option<PathBuf>,
 }
 
