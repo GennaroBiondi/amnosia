@@ -10,3 +10,10 @@ anyhow = "1.0.102"
 clap = { version = "4.6.1", features = ["derive"] }
 dirs-next = "2.0.0"
 newtype = { git = "https://github.com/GennaroBiondi/newtype.git" }
+
+[dev-dependencies]
+criterion = "0.8.2"
+
+[[bench]]
+name = "search_bench"
+harness = false
