@@ -32,7 +32,7 @@ impl ReminderList {
         self.0.as_ref()
     }
 
-    pub fn find_reminders_by_fuzzy_entry(&self, query: &str) -> HashMap<usize, &Reminder> {
+    pub fn find_reminders_by_fuzzy_entry(&self, query: &str) -> Vec<(usize, &Reminder)> {
         self.get_vec()
             .iter()
             .enumerate()
@@ -40,7 +40,7 @@ impl ReminderList {
             .collect()
     }
 
-    pub fn find_reminders_by_exact_entry(&self, query: &str) -> HashMap<usize, &Reminder> {
+    pub fn find_reminders_by_exact_entry(&self, query: &str) -> Vec<(usize, &Reminder)> {
         self.get_vec()
             .iter()
             .enumerate()
