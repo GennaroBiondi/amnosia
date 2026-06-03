@@ -1,6 +1,7 @@
 use anyhow::Result;
 use std::{fs::OpenOptions, path::Path};
 
+#[derive(Debug)]
 pub struct Reminder {
     pub entry: String,
     pub timestamp: newtype::UnixTimestamp,
