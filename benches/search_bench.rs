@@ -24,5 +24,25 @@ fn bench_fuzzy_search_100k(c: &mut Criterion) {
     });
 }
 
-criterion_group!(benches, bench_fuzzy_search_10k, bench_fuzzy_search_100k);
+fn bench_exact_search_10k(c: &mut Criterion) {
+    let list = make_big_list(FILE_10K);
+    c.bench_function("exact search 10k entries", |b| {
+        b.iter(|| list.find_reminders_by_exact_entry(black_box("meeting")))
+    });
+}
+
+fn bench_exact_search_100k(c: &mut Criterion) {
+    let list = make_big_list(FILE_100K);
+    c.bench_function("exact search 100k entries", |b| {
+        b.iter(|| list.find_reminders_by_exact_entry(black_box("meeting")))
+    });
+}
+
+criterion_group!(
+    benches,
+    bench_fuzzy_search_10k,
+    bench_fuzzy_search_100k,
+    bench_exact_search_10k,
+    bench_exact_search_100k
+);
 criterion_main!(benches);
