@@ -1,7 +1,6 @@
 use crate::reminder::Reminder;
 use anyhow::{bail, Result};
 use newtype::UnixTimestamp;
-use std::collections::HashMap;
 use std::path::Path;
 
 pub struct ReminderList(Vec<Reminder>);

@@ -1,6 +1,6 @@
 [package]
 name = "amnosia"
-version = "0.1.2"
+version = "0.2.0"
 authors = ["San_Genna <email@example.com>"]
 description = "a simple program to remind you of tasks!"
 edition = "2021"
