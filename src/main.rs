@@ -1,10 +1,10 @@
-use anyhow::Result;
+use anyhow::{bail, Result};
 use clap::Parser;
 use commands::{Cli, Commands};
 use newtype::UnixTimestamp;
 use reminder::Reminder;
 use reminder_list::ReminderList;
-use std::path::PathBuf;
+use std::{io::Write, path::PathBuf};
 
 mod commands;
 mod reminder;
@@ -16,6 +16,20 @@ fn expand_path(s: &str) -> Result<PathBuf> {
         Ok(home.join(rest))
     } else {
         Ok(PathBuf::from(s))
+    }
+}
+
+fn ask_user() -> Result<bool> {
+    use std::io::stdin;
+
+    let mut response = String::new();
+
+    match stdin().read_line(&mut response) {
+        Ok(_n) => match response.trim().to_lowercase().as_str() {
+            "yes" | "y" | "yeah" | "positive" | "sure" => Ok(true),
+            _ => Ok(false),
+        },
+        Err(error) => bail!("Error reading input: {error}"),
     }
 }
 
@@ -49,10 +63,55 @@ fn main() -> Result<()> {
         }
         Commands::Demind { query } => {
             let mut reminder_list = ReminderList::from_file(&path)?;
-            if let None = reminder_list.delete_reminder_by_entry_fuzzy(&query) {
-                println!("No entry found matching query: {}", query);
+            let mut search_literally = true;
+            match query.to_lowercase().as_str() {
+                "all" => {
+                    println!("You've entered 'all' as your query.");
+                    println!("Did you mean to search for entries containing 'all'?");
+                    print!("[y/n]: ");
+                    std::io::stdout().flush()?;
+                    if ask_user()? {
+                        search_literally = true;
+                    } else {
+                        print!("Are you sure you want to delete ALL entries? [y/n]: ");
+                        std::io::stdout().flush()?;
+                        if ask_user()? {
+                            println!("Deleting all entries...");
+                            reminder_list.wipe();
+                            reminder_list.dump_to_file(&path)?;
+                        }
+                        return Ok(());
+                    }
+                }
+                _ => {}
             }
-            reminder_list.dump_to_file(&path)?;
+
+            if search_literally {
+                let to_delete_list = &reminder_list.find_reminders_by_fuzzy_entry(&query);
+                if to_delete_list.is_empty() {
+                    println!("No reminders found matching query: {}", query);
+                    return Ok(());
+                }
+                if to_delete_list.len() > 1 {
+                    println!("Multiple matches found!");
+                }
+                let mut indices_to_delete: Vec<usize> = Vec::new();
+                for (index, reminder) in to_delete_list {
+                    println!("Do you want to delete this reminder?");
+                    println!("  Content: {}", reminder.entry);
+                    println!("  At:      {}", reminder.timestamp.prettify());
+                    print!("\n[y/n]: ");
+                    std::io::stdout().flush()?;
+                    if ask_user()? {
+                        indices_to_delete.push(*index);
+                    }
+                }
+                indices_to_delete.sort_unstable_by(|a, b| b.cmp(a));
+                for index in indices_to_delete {
+                    reminder_list.delete_reminder_by_index(index);
+                }
+                reminder_list.dump_to_file(&path)?;
+            }
         }
     }
 
