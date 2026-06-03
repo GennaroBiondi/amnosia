@@ -27,7 +27,7 @@ impl ReminderList {
         Ok(ReminderList(reminders))
     }
 
-    pub fn get_vec(&self) -> &Vec<Reminder> {
+    pub fn get_vec(&self) -> &[Reminder] {
         self.0.as_ref()
     }
 
