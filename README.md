@@ -1,38 +1,27 @@
 # Amnosia
-<img width="752" height="527" alt="image" src="https://github.com/user-attachments/assets/e8b348cf-6e8f-4fa0-b87e-053f1748059e" />
+[![CI](https://github.com/GennaroBiondi/amnosia/actions/workflows/release.yml/badge.svg)](https://github.com/GennaroBiondi/amnosia/actions/workflows/release.yml)
+[![License](https://img.shields.io/github/license/GennaroBiondi/amnosia)](LICENSE)
+[![Latest Release](https://img.shields.io/github/v/release/GennaroBiondi/amnosia)](https://github.com/GennaroBiondi/amnosia/releases)
+![Rust](https://img.shields.io/badge/built%20with-Rust-orange?logo=rust)
 
-A simple CLI tool to store and manage reminders in your filesystem.
+<img width="690" height="592" alt="image" src="https://github.com/user-attachments/assets/f431257d-0670-41fc-9234-81fd0f9595f8" />
+
+*The reminder tool that gets in your face.*
 
 ## What is Amnosia?
-Amnosia is a minimal command-line reminder tool that stores entries locally.
-Designed to be fast, simple, and always in your way — in a good sense.
+You don't forget your reminders because you're disorganized,
+you forget them because your todo app doesn't get in your face.
+Amnosia does. It shows up every time you open a terminal, so your
+reminders are always visible without you having to think about it.
 
 ## Installation
 
-### Option 1: Cargo install (recommended)
-
-
+Clone the git repo and use cargo to install it in your path.
 ```bash
 git clone https://github.com/GennaroBiondi/amnosia
 cd amnosia
 cargo install --path .
 ```
-
-### Option 2: Build manually
-
-```bash
-git clone https://github.com/GennaroBiondi/amnosia
-cd amnosia
-cargo build --release
-```
-
-Then move the binary:
-
-```bash
-cp target/release/amnosia ~/.local/bin/
-```
-
-Make sure `~/.local/bin` (or wherever you're moving the binary) is in your PATH.
 
 ## Usage
 | Command | Info |
@@ -53,7 +42,7 @@ amnosia remind -n 7
 
 ## Performance
 
-Benchmarked with Criterion.rs on a 100k entry file:
+Benchmarked with Criterion.rs on various sized files:
 
 | Operation | Time |
 | --- | --- |
