@@ -1,7 +1,8 @@
 use crate::reminder::Reminder;
 use anyhow::{bail, Result};
 use newtype::UnixTimestamp;
-use std::path::Path;
+use std::collections::HashMap;
+use std::{ops::Index, path::Path, vec};
 
 pub struct ReminderList(Vec<Reminder>);
 
@@ -31,13 +32,21 @@ impl ReminderList {
         self.0.as_ref()
     }
 
-    pub fn delete_reminder_by_entry_fuzzy(&mut self, query: &str) -> Option<Reminder> {
+    pub fn find_reminders_by_fuzzy_entry(&self, query: &str) -> HashMap<usize, &Reminder> {
+        self.get_vec()
+            .iter()
+            .enumerate()
+            .filter(|(_, x)| x.entry.contains(query))
+            .collect()
+    }
+
+    pub fn wipe(&mut self) {
+        self.0 = Vec::new();
+    }
+
+    pub fn delete_reminder_by_index(&mut self, index: usize) -> Reminder {
         let vec = &mut self.0;
-        if let Some(i) = vec.iter().position(|x| x.entry.contains(query)) {
-            Some(vec.remove(i))
-        } else {
-            None
-        }
+        vec.remove(index)
     }
 
     pub fn dump_to_file(&self, path: &Path) -> Result<()> {
