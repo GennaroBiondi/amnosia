@@ -29,13 +29,16 @@ pub enum Commands {
     Mind {
         #[arg(short, long)]
         entry: String,
+
+        #[arg(short, long)]
+        deadline: Option<String>,
     },
     Remind {
         #[arg(short = 'n', long = "number-limit")]
         number_limit: Option<usize>,
 
-        #[arg(short = 'd', long)]
-        include_dates: Option<bool>,
+        #[arg(short = 'd', long, action = clap::ArgAction::SetTrue)]
+        include_dates: bool,
     },
     Demind {
         #[command(flatten)]

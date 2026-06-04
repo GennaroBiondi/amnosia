@@ -2,7 +2,7 @@ use anyhow::{anyhow, bail, Result};
 use clap::Parser;
 use commands::{Cli, Commands};
 use newtype::UnixTimestamp;
-use reminder::Reminder;
+use reminder::ReminderType;
 use reminder_list::ReminderList;
 use std::{fs::File, io::Write, path::Path, path::PathBuf};
 
@@ -45,29 +45,26 @@ fn expand_path(s: &str) -> Result<PathBuf> {
     Ok(PathBuf::from(s))
 }
 
+// Thanks @phitazero
 fn is_a_valid_reminders_file(path: &Path) -> Result<()> {
     if !path.exists() {
-        bail!("Reminders file doesn't exist: {}", path.display());
+        let parent_dir = path.parent().ok_or_else(|| {
+            anyhow!(
+                "Provided path {} has no parent and is likely invalid",
+                path.display()
+            )
+        })?;
+
+        if !parent_dir.exists() {
+            std::fs::create_dir_all(parent_dir)?;
+        }
+
+        File::create(path)?;
     }
 
     if !path.is_file() {
         bail!("Reminders file isn't a file: {}", path.display());
     }
-
-    let parent_dir = path.parent().ok_or_else(|| {
-        anyhow!(
-            "Provided path {} has no parent and is likely invalid",
-            path.display()
-        )
-    })?;
-
-    if !parent_dir.exists() {
-        std::fs::create_dir_all(parent_dir)?;
-    }
-
-    // if the file already existed the function would've early exited
-    // so it's fine to create a new one, without being afraid
-    File::create(path)?;
 
     Ok(())
 }
@@ -77,6 +74,20 @@ fn get_reminders_file_path() -> Result<PathBuf> {
         dirs_next::data_dir().ok_or_else(|| anyhow::anyhow!("No data directory available"))?;
 
     Ok(base.join("amnosia").join("reminders.txt"))
+}
+
+fn string_to_unix_timestamp(s: &str) -> Option<UnixTimestamp> {
+    let s = s.trim();
+
+    match s {
+        "today" => Some(UnixTimestamp::now()),
+        "tomorrow" => Some(UnixTimestamp(UnixTimestamp::now().0 + 86400)),
+        "yesterday" => Some(UnixTimestamp(UnixTimestamp::now().0 - 86400)),
+        _ => {
+            let days: i64 = s.parse().ok()?;
+            Some(UnixTimestamp(UnixTimestamp::now().0 + days * 86400))
+        }
+    }
 }
 
 fn main() -> Result<()> {
@@ -92,11 +103,19 @@ fn main() -> Result<()> {
     is_a_valid_reminders_file(&path)?;
 
     match cli.command {
-        Commands::Mind { entry } => {
+        Commands::Mind { entry, deadline } => {
             let timestamp = UnixTimestamp::now();
-            let reminder_entry: Reminder = Reminder {
-                entry,
-                timestamp: timestamp,
+            let reminder_entry = match deadline {
+                Some(dl) => {
+                    let end = string_to_unix_timestamp(&dl)
+                        .ok_or_else(|| anyhow::anyhow!("Invalid deadline: {dl}"))?;
+                    ReminderType::TimedReminder {
+                        entry,
+                        timestamp,
+                        end,
+                    }
+                }
+                None => ReminderType::NormalReminder { entry, timestamp },
             };
             reminder_entry.append_to_file(&path)?;
         }
@@ -111,12 +130,7 @@ fn main() -> Result<()> {
                 None => vec.iter().collect::<Vec<_>>(),
             };
             for reminder in iter {
-                match include_dates {
-                    Some(true) => {
-                        println!("[{}]: {}", reminder.timestamp.prettify(), reminder.entry)
-                    }
-                    _ => println!("{}", reminder.entry),
-                }
+                reminder.display(include_dates);
             }
         }
         Commands::Demind { query } => {
@@ -169,8 +183,8 @@ fn main() -> Result<()> {
                 let mut indices_to_delete: Vec<usize> = Vec::new();
                 for (index, reminder) in &to_delete_list {
                     println!("Do you want to delete this reminder?");
-                    println!("  Content: {}", reminder.entry);
-                    println!("  At:      {}", reminder.timestamp.prettify());
+                    println!("  Content: {}", reminder.get_content());
+                    println!("  At:      {}", reminder.get_timestamp().prettify());
                     print!("\n[y/n]: ");
                     std::io::stdout().flush()?;
                     if ask_user()? {
