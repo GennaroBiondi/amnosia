@@ -1,6 +1,6 @@
 use amnosia::reminder_list::ReminderList;
 use criterion::{criterion_group, criterion_main, Criterion};
-use std::{hint::black_box, path::PathBuf}; // fix name to match your crate
+use std::{hint::black_box, path::PathBuf};
 
 const FILE_10K: &str = "benches/testing_data/file_10k.test";
 const FILE_100K: &str = "benches/testing_data/file_100k.test";
