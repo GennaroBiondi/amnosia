@@ -42,11 +42,11 @@ amnosia remind -n 7
 
 ## Performance
 
-Benchmarked with Criterion.rs on various sized files:
+Benchmarked with Criterion.rs (*on my pc*) on various sized files:
 
 | Operation | Time |
 | --- | --- |
-| Fuzzy search 10k reminders | ~177 µs |
-| Fuzzy search 100k reminders | ~188 µs |
-| Exact search 10k reminders | ~3 µs |
-| Exact search 100k reminders | ~3 µs |
+| Fuzzy search 10k reminders | ~170 µs |
+| Fuzzy search 100k reminders | ~1.9 ms |
+| Exact search 10k reminders | ~6 µs |
+| Exact search 100k reminders | ~63 µs |
