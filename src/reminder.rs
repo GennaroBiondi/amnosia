@@ -24,7 +24,7 @@ impl std::fmt::Display for ReminderType {
                 timestamp,
                 end,
             } => {
-                if timestamp.is_due() {
+                if timestamp.passed_from(end) {
                     writeln!(
                         f,
                         "[{}]: {}... Due! ({})",
@@ -100,7 +100,7 @@ impl ReminderType {
                 timestamp,
                 end,
             } => {
-                let due = timestamp.is_due();
+                let due = timestamp.passed_from(end);
                 if show_dates {
                     match due {
                         true => format!(
