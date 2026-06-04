@@ -9,7 +9,7 @@ edition = "2021"
 anyhow = "1.0.102"
 clap = { version = "4.6.1", features = ["derive"] }
 dirs-next = "2.0.0"
-newtype = { git = "https://github.com/GennaroBiondi/newtype.git" }
+newtype = { git = "https://github.com/GennaroBiondi/newtype.git", commit = "c5ee17698ebf322cd8d99904eecfd8e87e643464" }
 
 [dev-dependencies]
 criterion = "0.8.2"
