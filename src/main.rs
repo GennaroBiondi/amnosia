@@ -80,14 +80,33 @@ fn string_to_unix_timestamp(s: &str) -> Option<UnixTimestamp> {
     let s = s.trim();
 
     match s {
-        "today" => Some(UnixTimestamp::now()),
-        "tomorrow" => Some(UnixTimestamp(UnixTimestamp::now().0 + 86400)),
-        "yesterday" => Some(UnixTimestamp(UnixTimestamp::now().0 - 86400)),
-        _ => {
-            let days: i64 = s.parse().ok()?;
-            Some(UnixTimestamp(UnixTimestamp::now().0 + days * 86400))
-        }
+        "today" => return Some(UnixTimestamp::now()),
+        "tomorrow" => return Some(UnixTimestamp(UnixTimestamp::now().0 + 86400)),
+        "yesterday" => return Some(UnixTimestamp(UnixTimestamp::now().0 - 86400)),
+        _ => {}
     }
+
+    let (sign, rest) = if let Some(r) = s.strip_prefix('-') {
+        (-1i64, r)
+    } else if let Some(r) = s.strip_prefix('+') {
+        (1i64, s.strip_prefix('+').unwrap_or(r))
+    } else {
+        (1i64, s)
+    };
+
+    let unit_start = rest.find(|c: char| c.is_alphabetic())?;
+    let (num_str, unit) = rest.split_at(unit_start);
+    let n: i64 = num_str.parse().ok()?;
+
+    let seconds = match unit {
+        "m" | "min" | "mins" | "minute" | "minutes" => 60,
+        "h" | "hr" | "hrs" | "hour" | "hours" => 3600,
+        "d" | "day" | "days" => 86400,
+        "w" | "week" | "weeks" => 86400 * 7,
+        _ => return None,
+    };
+
+    Some(UnixTimestamp(UnixTimestamp::now().0 + sign * n * seconds))
 }
 
 fn main() -> Result<()> {
